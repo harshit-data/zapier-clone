@@ -9,8 +9,9 @@
   },
   "devDependencies": {
     "prettier": "^3.2.5",
+    "prisma": "^5.18.0",
     "turbo": "^2.0.14",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=18"
@@ -19,5 +20,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@prisma/client": "^5.18.0"
+  }
 }

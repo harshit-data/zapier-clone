@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  username String
+  email String
+  password String
+  folders Folder[]
+}
+model Folder{
+  id String @id @default(uuid())
+  name String
+  draftZaps DraftZap[]
+  userId Int
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+  @@unique([userId,name])
+}
+
+model Zap  {
+  id String @id @default(cuid())
+  draftZapId String @unique
+  draftZap DraftZap @relation(fields: [draftZapId],references: [id])
+  ZapRuns ZapRun[]
+}
+
+model DraftZap {
+  id String @id @default(cuid())
+  trigger Trigger? 
+  actions Action[]
+  status String @default("pending")
+  folderId String
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  zap Zap?
+}
+
+model Trigger {
+  id String @id @default(cuid())
+  draftZapId String @unique
+  availableTriggerId String?
+  triggerEventId String 
+  triggerEvent TriggerEvent? @relation(fields: [triggerEventId],references: [id])
+  type AvailableTrigger? @relation(fields: [availableTriggerId],references: [id],onDelete: Cascade)
+  draftZap DraftZap @relation(references: [id],fields: [draftZapId],onDelete: Cascade)
+}
+
+model Action {
+  id String @id @default(cuid())
+  draftZapId String
+  draftZap DraftZap @relation(references: [id],fields: [draftZapId])
+  availableActionId String?
+  actionEventId String
+  actionEvent ActionEvent @relation(fields: [actionEventId],references: [id],onDelete: Cascade)
+  type AvailableAction? @relation(fields: [availableActionId],references: [id],onDelete: Cascade)
+  sortingOrder Int @default(0)
+}
+
+model AvailableAction{
+  id String @id @default(cuid())
+  name String
+  image String
+  action Action[]
+  actionEvents ActionEvent[]
+}
+
+model ActionEvent {
+  id String @id @default(uuid())
+  name String
+  availableActionId String
+  actions Action[]
+  availableAction AvailableAction @relation(fields: [availableActionId],references: [id],onDelete: Cascade)
+}
+model AvailableTrigger {
+  id String @id @default(cuid())
+  name String
+  image String
+  triggers Trigger[]
+  triggerEvents TriggerEvent[]
+  
+}
+model TriggerEvent {
+  id String @id @default(uuid())
+  name String
+  availableTriggerId String
+  triggers Trigger[]
+  availableTrigger AvailableTrigger @relation(fields: [availableTriggerId],references: [id],onDelete: Cascade)
+}
+model ZapRun {
+  id String @id @default(cuid())
+  zapId String 
+  metaData Json 
+  zap Zap @relation(fields: [zapId],references: [id])
+  zapRunOutbox ZapRunOutbox? 
+}
+
+model ZapRunOutbox {
+  id String  @id @default(cuid())
+  zapRunId String @unique
+  zapRun ZapRun @relation(fields: [zapRunId], references: [id])
+}
